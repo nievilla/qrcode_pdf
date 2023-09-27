@@ -144,7 +144,7 @@ fontpitch fontpitch = variable!
 fontfamily fontfamily = swiss!
 string facename = "Tahoma"
 string pointer = "hyperlink!"
-string picturename = "C:\proyecto pw2022\Blog\PowerBuilder\qrcode_pdf\qr_pdfreader.jpg"
+string picturename = "qr_pdfreader.jpg"
 alignment htextalign = left!
 string powertiptext = "Test"
 end type
