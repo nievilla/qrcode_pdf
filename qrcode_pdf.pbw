@@ -1,0 +1,7 @@
+Save Format v3.0(19990112)
+@begin Targets
+ 0 "qrcode_pdf.pbt";
+@end;
+DefaultTarget "qrcode_pdf.pbt";
+DefaultExportEncode "UTF-8";
+DefaultRemoteTarget "qrcode_pdf.pbt";
