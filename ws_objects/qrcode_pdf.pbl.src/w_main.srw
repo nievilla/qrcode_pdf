@@ -2,7 +2,11 @@
 forward
 global type w_main from window
 end type
-type pb_1 from picturebutton within w_main
+type pb_open from picturebutton within w_main
+end type
+type pb_writer from picturebutton within w_main
+end type
+type pb_reader from picturebutton within w_main
 end type
 type p_2 from picture within w_main
 end type
@@ -29,7 +33,9 @@ boolean controlmenu = true
 boolean minbox = true
 string icon = "AppIcon!"
 boolean center = true
-pb_1 pb_1
+pb_open pb_open
+pb_writer pb_writer
+pb_reader pb_reader
 p_2 p_2
 st_info st_info
 st_myversion st_myversion
@@ -90,7 +96,9 @@ if len(as_target) > 0 then as_return_values[UpperBound(as_return_values) + 1] = 
 end function
 
 on w_main.create
-this.pb_1=create pb_1
+this.pb_open=create pb_open
+this.pb_writer=create pb_writer
+this.pb_reader=create pb_reader
 this.p_2=create p_2
 this.st_info=create st_info
 this.st_myversion=create st_myversion
@@ -98,7 +106,9 @@ this.st_platform=create st_platform
 this.r_2=create r_2
 this.dw_1=create dw_1
 this.listboxdirectory=create listboxdirectory
-this.Control[]={this.pb_1,&
+this.Control[]={this.pb_open,&
+this.pb_writer,&
+this.pb_reader,&
 this.p_2,&
 this.st_info,&
 this.st_myversion,&
@@ -109,7 +119,9 @@ this.listboxdirectory}
 end on
 
 on w_main.destroy
-destroy(this.pb_1)
+destroy(this.pb_open)
+destroy(this.pb_writer)
+destroy(this.pb_reader)
 destroy(this.p_2)
 destroy(this.st_info)
 destroy(this.st_myversion)
@@ -131,7 +143,153 @@ event open;wf_version(st_myversion, st_platform)
 
 end event
 
-type pb_1 from picturebutton within w_main
+type pb_open from picturebutton within w_main
+integer x = 3406
+integer y = 1664
+integer width = 151
+integer height = 116
+integer taborder = 50
+integer textsize = -10
+integer weight = 400
+fontcharset fontcharset = ansi!
+fontpitch fontpitch = variable!
+fontfamily fontfamily = swiss!
+string facename = "Tahoma"
+string pointer = "Hyperlink!"
+boolean originalsize = true
+string picturename = "C:\proyecto pw2022\Blog\PowerBuilder\qrcode_pdf\open.png"
+alignment htextalign = left!
+string powertiptext = "Open All PDF to Writter"
+end type
+
+event clicked;Long ll_Row, ll_RowCount
+String ls_delivery_note, ls_year, ls_series, ls_company, ls_path, ls_filename
+
+ll_RowCount = dw_1.RowCount() 
+
+FOR ll_Row = 1 TO  ll_RowCount	
+	
+	ls_company=dw_1.object.company[ll_Row]
+	ls_year = dw_1.object.year[ll_Row]
+	ls_series=dw_1.object.series[ll_Row]
+	ls_delivery_note=dw_1.object.delivery_note[ll_Row]
+	
+	ls_filename = ls_company+"-"+ls_year+"-"+ls_series+"-"+ls_delivery_note+".pdf"
+
+	ls_path = gs_appdir + "\pdfwriter\"+ls_filename
+	
+	dw_1.object.path[ll_Row] = ls_path
+	
+NEXT
+end event
+
+type pb_writer from picturebutton within w_main
+integer x = 3557
+integer y = 1520
+integer width = 274
+integer height = 268
+integer taborder = 30
+integer textsize = -10
+integer weight = 400
+fontcharset fontcharset = ansi!
+fontpitch fontpitch = variable!
+fontfamily fontfamily = swiss!
+string facename = "Tahoma"
+string pointer = "hyperlink!"
+string picturename = "qr_pdfwriter.jpg"
+alignment htextalign = left!
+string powertiptext = "Insert QR"
+end type
+
+event clicked;String ls_path, ls_delivery_note, ls_year, ls_series, ls_company, ls_data, ls_qrImage
+Long ll_Row, ll_RowCount
+nvo_barcodeservice ln_bcserv
+nvo_fileservice ln_file
+PDFpage lpdf_page
+PDFImage lpdf_image 
+PDFdocument lpdf_doc
+
+SetPointer(HourGlass!)
+
+ll_RowCount = dw_1.RowCount() 
+
+//Control de Consulta
+IF ll_RowCount=0 THEN
+	messagebox("Atención","¡ Debe realizar primero una consulta !", exclamation!)
+	RETURN
+END IF
+
+dw_1.setredraw(FALSE)
+
+ln_bcserv = CREATE nvo_barcodeservice
+ln_file = CREATE nvo_FileService
+
+FOR ll_Row = 1 TO  ll_RowCount	
+	
+	ls_path = dw_1.object.path[ll_Row]
+	
+	IF ls_path = "" THEN CONTINUE
+	
+	lpdf_page = create PDFpage
+	lpdf_image = create PDFImage
+	lpdf_doc = create PDFdocument
+
+	ls_company=dw_1.object.company[ll_Row]
+	ls_year = dw_1.object.year[ll_Row]
+	ls_series=dw_1.object.series[ll_Row]
+	ls_delivery_note=dw_1.object.delivery_note[ll_Row]
+	
+	ls_data = ls_company+"-"+ls_year+"-"+ls_series+"-"+ls_delivery_note
+
+	ls_qrImage = ln_bcserv.of_qrgenerate(ls_data)
+	
+	//Importamos el PDF Completo al Documento
+	lpdf_doc.importpdf(ls_path)
+	
+	//Elimino la primera página
+	lpdf_doc.removepage(1)
+
+	//Importamos la Pagina1 al Objeto PdfPage
+	lpdf_page.importcontent(ls_path, 1, 0, 0, lpdf_page.getwidth(), lpdf_page.getheight())
+	
+	//Creamos la Imagen en el Objeto PdfImage
+	lpdf_image.filename = ls_qrImage
+	lpdf_image.x=330
+	lpdf_image.y=10
+	lpdf_image.height=100
+	lpdf_image.width=100
+	lpdf_image.FitMethod = PDFImageFitmethod_Meet!
+	
+	//Añadimos la Imagen Creada al Objeto PdfPage
+	lpdf_page.addcontent( lpdf_image)
+	
+	//Importamos la Pagina con la Imagen al Objeto PDFDocument en la primera poicion
+	lpdf_doc.InsertPage(lpdf_page, 1)
+	
+	//Guardo el PDF con un nuevo nombre.
+	ls_path = ln_file.of_getdirectoryname(ls_path)+"\"+string(ll_row)+".pdf"
+	
+	lpdf_doc.save(ls_path)
+	
+	destroy lpdf_page
+	destroy lpdf_image
+	destroy lpdf_doc
+NEXT
+
+destroy ln_bcserv
+destroy ln_file
+dw_1.setredraw(TRUE)
+SetPointer(Arrow!)
+
+
+
+
+
+
+
+end event
+
+type pb_reader from picturebutton within w_main
 integer x = 3835
 integer y = 1516
 integer width = 274
@@ -146,7 +304,7 @@ string facename = "Tahoma"
 string pointer = "hyperlink!"
 string picturename = "qr_pdfreader.jpg"
 alignment htextalign = left!
-string powertiptext = "Test"
+string powertiptext = "Read Qr"
 end type
 
 event clicked;String ls_path, ls_delivery_note, ls_year, ls_series, ls_company, ls_data, ls_search_expr, ls_current
@@ -292,7 +450,7 @@ end type
 type dw_1 from datawindow within w_main
 integer x = 27
 integer y = 316
-integer width = 4087
+integer width = 4110
 integer height = 1188
 integer taborder = 10
 string title = "none"
@@ -302,6 +460,24 @@ boolean hsplitscroll = true
 boolean livescroll = true
 borderstyle borderstyle = stylelowered!
 end type
+
+event clicked;integer li_rtn
+string ls_file
+string ls_path
+string  ls_current
+
+if dwo.name= "p_open" then
+	ls_current=GetCurrentDirectory ( )
+	ls_path=	gs_appdir
+	li_rtn = GetFileOpenName("Archivo a cargar", ls_path, ls_file, "pdf", "Acrobat Reader (*.pdf), *.Pdf", ls_path)
+	
+	if li_rtn <> 1 then ls_path = ""
+	
+	this.object.path[row]=ls_path
+	
+	ChangeDirectory ( ls_current )
+end if	
+end event
 
 type listboxdirectory from listbox within w_main
 boolean visible = false
